@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Detalle de equipo</title>
+  <link rel="stylesheet" href="/estilos.css">
+</head>
+<body>
+  <main class="contenedor">
+    <a class="volver" href="/equipos">← Volver al inventario</a>
+    <header class="cabecera">
+      <p class="etiqueta">Ficha de inventario</p>
+      <h1><%= equipo.nombre %></h1>
+      <p><%= equipo.codigo %> · <%= equipo.categoria %></p>
+    </header>
+
+    <section class="panel">
+      <h2>Estado actual</h2>
+      <p><span class="estado <%= equipo.disponible ? 'libre' : 'ocupado' %>"><%= equipo.disponible ? 'Disponible' : 'Prestado' %></span></p>
+      <% if (equipo.usuario_actual) { %>
+        <p><strong>Lo tiene:</strong> <%= equipo.usuario_actual %></p>
+        <p><strong>Fecha del préstamo:</strong> <%= new Date(equipo.fecha_prestamo_actual).toLocaleString('es-ES') %></p>
+      <% } else { %>
+        <p>Este equipo no tiene ningún préstamo activo.</p>
+      <% } %>
+    </section>
+
+    <section class="panel">
+      <h2>Historial de préstamos</h2>
+      <% if (equipo.historial.length === 0) { %>
+        <p>Este equipo todavía no tiene préstamos registrados.</p>
+      <% } else { %>
+        <div class="tabla-contenedor">
+          <table>
+            <thead><tr><th>Préstamo</th><th>Usuario</th><th>Fecha préstamo</th><th>Fecha devolución</th></tr></thead>
+            <tbody>
+              <% equipo.historial.forEach(prestamo => { %>
+                <tr>
+                  <td>#<%= prestamo.id %></td>
+                  <td><%= prestamo.usuario %></td>
+                  <td><%= new Date(prestamo.fecha_prestamo).toLocaleString('es-ES') %></td>
+                  <td><%= prestamo.fecha_devolucion ? new Date(prestamo.fecha_devolucion).toLocaleString('es-ES') : 'Pendiente' %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </section>
+  </main>
+</body>
+</html>

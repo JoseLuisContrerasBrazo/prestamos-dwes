@@ -1,0 +1,18 @@
+{
+  "name": "practica-prestamos-dwes",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Gestión de préstamos de material informático - DWES",
+  "scripts": {
+    "start": "node src/server.mjs",
+    "dev": "node --watch src/server.mjs"
+  },
+  "engines": { "node": ">=24" },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "pg": "^8.16.3"
+  }
+}

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inventario de equipos</title>
+  <link rel="stylesheet" href="/estilos.css">
+</head>
+<body>
+  <main class="contenedor">
+    <header class="cabecera">
+      <p class="etiqueta">DWES · Gestión de material</p>
+      <h1>Inventario de equipos</h1>
+      <p>Consulta el material informático y su disponibilidad.</p>
+    </header>
+
+    <form class="filtros" method="GET" action="/equipos">
+      <label>Buscar por nombre
+        <input type="search" name="q" value="<%= filtros.q %>" placeholder="Ej. portátil">
+      </label>
+      <label>Categoría
+        <select name="categoria">
+          <option value="">Todas</option>
+          <% categorias.forEach(categoria => { %>
+            <option value="<%= categoria %>" <%= filtros.categoria === categoria ? 'selected' : '' %>><%= categoria %></option>
+          <% }) %>
+        </select>
+      </label>
+      <label>Disponibilidad
+        <select name="disponibilidad">
+          <option value="">Todos</option>
+          <option value="disponible" <%= filtros.disponibilidad === 'disponible' ? 'selected' : '' %>>Disponible</option>
+          <option value="prestado" <%= filtros.disponibilidad === 'prestado' ? 'selected' : '' %>>Prestado</option>
+        </select>
+      </label>
+      <label>Ordenar por
+        <select name="orden">
+          <option value="codigo" <%= filtros.orden === 'codigo' ? 'selected' : '' %>>Código</option>
+          <option value="nombre" <%= filtros.orden === 'nombre' ? 'selected' : '' %>>Nombre</option>
+        </select>
+      </label>
+      <button type="submit">Aplicar filtros</button>
+      <a class="enlace-secundario" href="/equipos">Limpiar</a>
+    </form>
+
+    <p class="resumen"><strong><%= total %></strong> equipo(s) encontrado(s)</p>
+    <% if (equipos.length === 0) { %>
+      <section class="vacio"><h2>Sin resultados</h2><p>No hay equipos que coincidan con los filtros seleccionados.</p></section>
+    <% } else { %>
+      <div class="tabla-contenedor">
+        <table>
+          <thead><tr><th>Código</th><th>Nombre</th><th>Categoría</th><th>Estado</th><th>Detalle</th></tr></thead>
+          <tbody>
+            <% equipos.forEach(equipo => { %>
+              <tr>
+                <td><strong><%= equipo.codigo %></strong></td>
+                <td><%= equipo.nombre %></td>
+                <td><%= equipo.categoria %></td>
+                <td><span class="estado <%= equipo.disponible ? 'libre' : 'ocupado' %>"><%= equipo.disponible ? 'Disponible' : 'Prestado' %></span></td>
+                <td><a href="/equipos/<%= equipo.id %>">Ver detalle</a></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+
+    <nav class="paginacion" aria-label="Paginación">
+      <% const parametros = new URLSearchParams({ q: filtros.q, categoria: filtros.categoria, disponibilidad: filtros.disponibilidad, orden: filtros.orden }); %>
+      <% if (pagina > 1) { parametros.set('pagina', String(pagina - 1)); %>
+        <a href="/equipos?<%= parametros.toString() %>">← Anterior</a>
+      <% } else { %><span class="desactivado">← Anterior</span><% } %>
+      <span>Página <strong><%= pagina %></strong> de <strong><%= paginas %></strong></span>
+      <% parametros.set('pagina', String(pagina + 1)); %>
+      <% if (pagina < paginas) { %><a href="/equipos?<%= parametros.toString() %>">Siguiente →</a><% } else { %><span class="desactivado">Siguiente →</span><% } %>
+    </nav>
+  </main>
+</body>
+</html>

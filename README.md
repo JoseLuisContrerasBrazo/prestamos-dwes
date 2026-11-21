@@ -254,3 +254,6 @@ Debe confirmarse un único préstamo. Comprueba también la tabla `prestamos` y 
 - No hay autenticación, sesiones, gestión de usuarios ni panel administrativo, porque no forman parte del enunciado.
 - Las operaciones de escritura se prueban mediante HTTP; la interfaz EJS se limita a consultar el inventario y el detalle.
 - La tabla de resultados de pruebas debe actualizarse con resultados reales de la ejecución local.
+
+## 11. IA
+- enlace chat de IA "https://chatgpt.com/share/6b018987-e0ec-83ed-b75a-fd06ca7f4e4d"

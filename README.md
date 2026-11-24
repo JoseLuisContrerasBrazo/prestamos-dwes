@@ -88,6 +88,139 @@ Parámetros de `/equipos`:
 Ejemplo:
 `http://localhost:3000/equipos?q=portatil&categoria=Portátiles&disponibilidad=disponible&orden=nombre&pagina=1`
 
+# Pruebas de la API con curl (Git Bash)
+
+Ejecuta estos comandos desde Git Bash con PostgreSQL arrancado (`docker compose up -d`) y Express en marcha (`npm start`, en otra terminal). La base de datos de ejemplo carga 11 equipos y 3 usuarios. Las escrituras se envían como JSON.
+
+> Si has cambiado el puerto de Express, sustituye `3000` en las URL. Los ejemplos usan los IDs iniciales habituales: equipos `1`, `2`, `3` y usuarios `1`, `2`, `3`. Comprueba los IDs en tu base de datos si ya has realizado pruebas.
+
+## 1. Comprobar conexión y consultar equipos
+
+```bash
+# Estado del servidor y conexión con PostgreSQL
+curl -i http://localhost:3000/api/health
+
+# Listado HTML
+curl -i http://localhost:3000/equipos
+
+# Búsqueda parcial, categoría, disponibilidad, orden y página
+curl -i "http://localhost:3000/equipos?q=portatil&categoria=Portátiles&disponibilidad=disponible&orden=nombre&pagina=1"
+
+# Detalle de un equipo (incluye préstamo activo e historial)
+curl -i http://localhost:3000/equipos/1
+```
+
+## 2. Crear un equipo (POST)
+
+```bash
+curl -i -X POST http://localhost:3000/api/equipos \
+  -H "Content-Type: application/json" \
+  -d '{"codigo":"CAM-001","nombre":"Cámara web Logitech","categoria":"Periféricos"}'
+```
+
+Respuesta esperada: `201 Created`. Guarda el `id` devuelto; se utilizará en las siguientes operaciones. Si repites el mismo código, debe responder `409 Conflict`.
+
+## 3. Modificar un equipo (PUT)
+
+Sustituye `1` por el ID que quieras modificar:
+
+```bash
+curl -i -X PUT http://localhost:3000/api/equipos/1 \
+  -H "Content-Type: application/json" \
+  -d '{"codigo":"PORT-001","nombre":"Portátil Lenovo ThinkPad actualizado","categoria":"Portátiles"}'
+```
+
+Respuesta esperada: `200 OK`. Esta operación no cambia el campo `disponible`.
+
+## 4. Crear un préstamo (POST)
+
+El ejemplo utiliza el equipo `1` y el usuario `1` (Ana García):
+
+```bash
+curl -i -X POST http://localhost:3000/api/prestamos \
+  -H "Content-Type: application/json" \
+  -d '{"equipoId":1,"usuarioId":1}'
+```
+
+Respuesta esperada: `201 Created`. Guarda el `id` del préstamo devuelto. Si intentas prestar otra vez el mismo equipo mientras siga prestado, debe responder `409 Conflict`:
+
+```bash
+curl -i -X POST http://localhost:3000/api/prestamos \
+  -H "Content-Type: application/json" \
+  -d '{"equipoId":1,"usuarioId":2}'
+```
+
+## 5. Devolver un préstamo (POST)
+
+Sustituye `1` por el ID de préstamo que devolvió la petición anterior:
+
+```bash
+curl -i -X POST http://localhost:3000/api/prestamos/1/devolucion
+```
+
+Respuesta esperada: `200 OK`, con `fecha_devolucion` informada. Repetir la devolución debe responder `409 Conflict`.
+
+## 6. Comprobar rollback ante un usuario inexistente
+
+Esta prueba intenta prestar el equipo `2` a un usuario que no existe (`999999`). La operación debe fallar y la transacción debe deshacer el cambio de disponibilidad:
+
+```bash
+curl -i -X POST http://localhost:3000/api/prestamos \
+  -H "Content-Type: application/json" \
+  -d '{"equipoId":2,"usuarioId":999999}'
+
+# Consulta el detalle del equipo: debe seguir apareciendo como disponible
+curl -i http://localhost:3000/equipos/2
+```
+
+La API debe responder con error controlado (`409`) y no debe quedar un préstamo insertado ni el equipo marcado como no disponible.
+
+## 7. Eliminar un equipo
+
+Usa un equipo que no tenga historial de préstamos. Por ejemplo, el ID `11` si no lo has utilizado:
+
+```bash
+curl -i -X DELETE http://localhost:3000/api/equipos/11
+```
+
+Respuesta esperada: `204 No Content`. Un equipo inexistente responde `404`; un equipo con historial de préstamos responde `409`.
+
+## 8. Prueba de dos préstamos simultáneos (Git Bash)
+
+Usa un equipo libre, por ejemplo el `3`. Lanza las dos peticiones casi al mismo tiempo:
+
+```bash
+curl -sS -o /tmp/prestamo-a.txt -w "Peticion A: %{http_code}\n" \
+  -X POST http://localhost:3000/api/prestamos \
+  -H "Content-Type: application/json" \
+  -d '{"equipoId":3,"usuarioId":1}' &
+
+curl -sS -o /tmp/prestamo-b.txt -w "Peticion B: %{http_code}\n" \
+  -X POST http://localhost:3000/api/prestamos \
+  -H "Content-Type: application/json" \
+  -d '{"equipoId":3,"usuarioId":2}' &
+
+wait
+cat /tmp/prestamo-a.txt
+cat /tmp/prestamo-b.txt
+```
+
+Resultado esperado: una petición `201` y la otra `409`. No deben existir dos préstamos activos para el mismo equipo.
+
+## 9. Códigos HTTP principales
+
+| Código | Significado en esta práctica |
+|---|---|
+| `200` | Consulta/actualización o devolución correcta |
+| `201` | Equipo o préstamo creado |
+| `204` | Equipo eliminado correctamente, sin cuerpo |
+| `400` | JSON, identificador o datos no válidos |
+| `404` | Recurso no encontrado |
+| `409` | Código duplicado, equipo ocupado, referencia inválida o conflicto de préstamo |
+| `500` | Error interno o conexión con la base de datos no disponible |
+
+Anota en el README el resultado real de cada prueba. No indiques que una prueba ha pasado hasta ejecutarla.
+
 ## 6. API
 
 Todos los cuerpos de escritura son JSON.
